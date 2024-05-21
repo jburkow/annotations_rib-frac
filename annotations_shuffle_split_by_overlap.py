@@ -1,7 +1,7 @@
 '''
 Filename: annotations_shuffle_split_by_overlap.py
 Author(s): Jonathan Burkow, burkowjo@msu.edu, Michigan State University
-Last Updated: 05/09/2022
+Last Updated: 05/15/2024
 Description: Takes the offset annotations file, shuffles all groups of annotations by PatientID,
     and creates a train/val/test splits.
 '''
@@ -9,15 +9,32 @@ Description: Takes the offset annotations file, shuffles all groups of annotatio
 import argparse
 import os
 import random
+import sys
 import time
 from math import ceil
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from rich.console import Console
+
+# Set the path to the rib_fracture_utils directory
+FILE = Path(__file__).resolve()
+ROOT = FILE.parents[1]
+sys.path.append(str(ROOT))
 
 from args import ARGS
-from general_utils import print_elapsed
+
+
+def parse_cmd_args():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--seed', type=int, default=ARGS['RANDOM_SEED'], help='Set the seed for random shuffling (default set in args.py).')
+    parser.add_argument('--anno_csv1', help='Path to first annotaiton file.')
+    parser.add_argument('--anno_csv2', help='Path to second annotaiton file.')
+    parser.add_argument('--no_save', action='store_true', help='Use to debug.')
+    parser.add_argument('--splits', type=int, default=6, help='Number of splits of data to generate')
+
+    return parser.parse_args()
 
 
 def load_anno_csv(csv_path: str, no_height_width: bool = False) -> pd.DataFrame:
@@ -43,8 +60,10 @@ def load_anno_csv(csv_path: str, no_height_width: bool = False) -> pd.DataFrame:
     return df
 
 
-def main(parse_args):
+def main():
     """Main Function"""
+    parse_args = parse_cmd_args()
+
     # Set the random seed for consistent output
     random.seed(parse_args.seed)
 
@@ -113,32 +132,9 @@ def main(parse_args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('--seed', type=int, default=ARGS['RANDOM_SEED'],
-                        help='Set the seed for random shuffling (default set in args.py).')
-
-    parser.add_argument('--anno_csv1',
-                        help='Path to first annotaiton file.')
-
-    parser.add_argument('--anno_csv2',
-                        help='Path to second annotaiton file.')
-
-    parser.add_argument('--no_save', action='store_true',
-                        help='Use to debug.')
-
-    parser.add_argument('--splits', type=int, default=6,
-                        help='Number of splits of data to generate')
-
-    parser_args = parser.parse_args()
-
-    print()
-    console = Console()
-    console.rule(f'Running {os.path.basename(__file__)}', style='deep_sky_blue1')
-    console.log('Starting execution...', style='deep_sky_blue1')
+    print(f"\n{'Starting execution: ' + Path(__file__).name:-^80}\n")
     start_time = time.perf_counter()
-    main(parser_args)
+    main()
     elapsed = time.perf_counter() - start_time
-    console.log(print_elapsed(elapsed), style="bold cyan3")
-    console.rule('[green]Done!', style='green')
-    print()
+    print(f"\n{'Done!':-^80}")
+    print(f'Execution finished in {elapsed:.3f} seconds ({time.strftime("%-H hr, %-M min, %-S sec", time.gmtime(elapsed))}).\n')

@@ -1,21 +1,50 @@
 '''
 Filename: annotations_shuffle_split.py
-Author: Jonathan Burkow, burkowjo@msu.edu
-        Michigan State University
-Last Updated: 04/29/2021
-Description: Takes the offset annotations file, shuffles all groups of
-    annotations by PatientID, and creates a train/val/test splits.
+Author(s): Jonathan Burkow, burkowjo@msu.edu, Michigan State University
+Last Updated: 05/15/2024
+Description: Takes the offset annotations file, shuffles all groups of annotations by PatientID, and
+    creates CSV of train/val/test splits.
 '''
 
 import argparse
-import time
 import random
+import sys
+import time
+from pathlib import Path
+
 import pandas as pd
+
+# Set the path to the rib_fracture_utils directory
+FILE = Path(__file__).resolve()
+ROOT = FILE.parents[1]
+sys.path.append(str(ROOT))
+
 from args import ARGS
 
 
-def main(parse_args):
+def parse_cmd_args():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--seed', type=int, default=ARGS['RANDOM_SEED'], help='Set the seed for random shuffling (default set in args.py).')
+    parser.add_argument('--val', action='store_true', help='Choose whether to include a validation set in the split.')
+    parser.add_argument('--anno_file', default=ARGS['ANNOTATION_OFFSET_FILENAME'], help='Path to the annotation file to split into train/val/test files.')
+    parser.add_argument('--train_ratio', type=float, default=0.75, help='Proportion of dataset to split into training set.')
+    parser.add_argument('--val_ratio', type=float, default=0.15, help='Proportion of dataset to split into validation set.')
+    parser.add_argument('--filename_shuffled', type=str, default='shuffled_annotations.csv', help='Filename to save shuffled annotations to.')
+    parser.add_argument('--filename_train', type=str, default='train_annotations.csv', help='Filename to save training annotations to.')
+    parser.add_argument('--filename_val', type=str, default='val_annotations.csv', help='Filename to save validation annotations to.')
+    parser.add_argument('--filename_test', type=str, default='test_annotations.csv', help='Filename to save testing annotations to.')
+    parser.add_argument('--no_test', action='store_true', help='Use if wanting to use a file with annotations as the test set.')
+    parser.add_argument('--test_file', type=str, help='Path to the annotation file to use as the test set.')
+    parser.add_argument('--no_save', action='store_true', help='Use to debug.')
+
+    return parser.parse_args()
+
+
+def main():
     """Main Function"""
+    parse_args = parse_cmd_args()
+
     # Set the random seed for consistent output
     random.seed(parse_args.seed)
 
@@ -110,54 +139,9 @@ def main(parse_args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Create CSVs of shuffled and train/val/test split annotations.')
-
-    parser.add_argument('--seed', type=int, default=ARGS['RANDOM_SEED'],
-                        help='Set the seed for random shuffling (default set in args.py).')
-
-    parser.add_argument('--val', action='store_true',
-                        help='Choose whether to include a validation set in the split.')
-
-    parser.add_argument('--anno_file', default=ARGS['ANNOTATION_OFFSET_FILENAME'],
-                        help='Path to the annotation file to split into train/val/test files.')
-
-    parser.add_argument('--train_ratio', type=float, default=0.75,
-                        help='Proportion of dataset to split into training set.')
-
-    parser.add_argument('--val_ratio', type=float, default=0.15,
-                        help='Proportion of dataset to split into validation set.')
-
-    parser.add_argument('--filename_shuffled', type=str, default='shuffled_annotations.csv',
-                        help='Filename to save shuffled annotations to.')
-
-    parser.add_argument('--filename_train', type=str, default='train_annotations.csv',
-                        help='Filename to save training annotations to.')
-
-    parser.add_argument('--filename_val', type=str, default='val_annotations.csv',
-                        help='Filename to save validation annotations to.')
-
-    parser.add_argument('--filename_test', type=str, default='test_annotations.csv',
-                        help='Filename to save testing annotations to.')
-
-    parser.add_argument('--no_test', action='store_true',
-                        help='Use if wanting to use a file with annotations as the test set.')
-
-    parser.add_argument('--test_file', type=str,
-                        help='Path to the annotation file to use as the test set.')
-
-    parser.add_argument('--no_save', action='store_true',
-                        help='Use to debug.')
-
-    parser_args = parser.parse_args()
-
-    # Print out start of execution
-    print('Starting execution...')
+    print(f"\n{'Starting execution: ' + Path(__file__).name:-^80}\n")
     start_time = time.perf_counter()
-
-    # Run main function
-    main(parser_args)
-
-    # Print out time to complete
-    print('Done!')
-    end_time = time.perf_counter()
-    print('Execution finished in {} seconds.'.format(round(end_time - start_time, 3)))
+    main()
+    elapsed = time.perf_counter() - start_time
+    print(f"\n{'Done!':-^80}")
+    print(f'Execution finished in {elapsed:.3f} seconds ({time.strftime("%-H hr, %-M min, %-S sec", time.gmtime(elapsed))}).\n')

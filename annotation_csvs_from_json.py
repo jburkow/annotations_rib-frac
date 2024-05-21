@@ -1,26 +1,43 @@
 '''
 Filename: annotation_csvs_from_json.py
-Author: Jonathan Burkow, burkowjo@msu.edu
-        Michigan State University
-Last Updated: 12/15/2021
+Author(s): Jonathan Burkow, burkowjo@msu.edu, Michigan State University
+Last Updated: 05/15/2024
 Description: Create annotation files from JSON files and integrate offsets from processing stage.
 '''
 
 import argparse
-import os
-import time
 import json
-import traceback
-import numpy as np
+import os
+import sys
+import time
+from pathlib import Path
+
 import pandas as pd
+from dicom_utils import extract_bboxes
 from tqdm import tqdm
-from dicom_utils import (load_dicom_image, crop_dicom, hist_equalization, create_rgb,
-                         scale_image_to_depth, save_to_png, save_to_npy, extract_bboxes)
+
+# Set the path to the rib_fracture_utils directory
+FILE = Path(__file__).resolve()
+ROOT = FILE.parents[1]
+sys.path.append(str(ROOT))
+
 from args import ARGS
-from general_utils import read_file
 
 
-def main(parse_args):
+def parse_cmd_args():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--json_path', help='Path to directory containing JSON annotation files.')
+    parser.add_argument('--offset_csv', help='Path to CSV file containing offsets for each image.')
+    parser.add_argument('--save_path', help='Path to save original and offset annotation CSV files to.')
+
+    return parser.parse_args()
+
+
+def main():
+    """Main Function"""
+    parse_args = parse_cmd_args()
+
     # Import offset information into a DataFrame
     offset_df = pd.read_csv(parse_args.offset_csv, names=(['patient_id', 'x_offset', 'y_offset']))
 
@@ -70,27 +87,9 @@ def main(parse_args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Do stuff.')
-
-    parser.add_argument('--json_path',
-                        help='Path to directory containing JSON annotation files.')
-
-    parser.add_argument('--offset_csv',
-                        help='Path to CSV file containing offsets for each image.')
-
-    parser.add_argument('--save_path',
-                        help='Path to save original and offset annotation CSV files to.')
-
-    parser_args = parser.parse_args()
-
-    # Print out start of execution
-    print('\nStarting execution...')
+    print(f"\n{'Starting execution: ' + Path(__file__).name:-^80}\n")
     start_time = time.perf_counter()
-
-    # Run main function
-    main(parser_args)
-
-    # Print out time to complete
-    print('\nDone!')
-    end_time = time.perf_counter()
-    print(f'Execution finished in {end_time - start_time:.3f} seconds.\n')
+    main()
+    elapsed = time.perf_counter() - start_time
+    print(f"\n{'Done!':-^80}")
+    print(f'Execution finished in {elapsed:.3f} seconds ({time.strftime("%-H hr, %-M min, %-S sec", time.gmtime(elapsed))}).\n')

@@ -7,16 +7,17 @@ Description: Goes through all normal annotation CSVs and changes the image paths
 '''
 
 import os
+import sys
 import time
 from pathlib import Path
+
 import pandas as pd
+from tqdm import tqdm
 
 # Set the path to the rib_fracture_utils directory
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[1]
 sys.path.append(str(ROOT))
-
-from general_utils import print_elapsed
 
 ORIGINAL_CSVS = [
     '/mnt/home/burkowjo/midi_lab/burkowjo_data/processed_fracture_present_1Feb2020_20210902/10fold_split_csvs/test_annotations_seed1337.csv',
@@ -75,7 +76,7 @@ def main():
     binary_img_path = '/mnt/research/midi_lab/burkowjo_data/processed_fracture_present_1Feb2020_20210902/8bit_images/binary_binary_binary_png/'
     varied_img_path = '/mnt/research/midi_lab/burkowjo_data/processed_fracture_present_1Feb2020_20210902/8bit_images/raw_histeq_bilateral_png/'
 
-    for df in track(ORIGINAL_CSVS, description='Copying Annotation CSVs...'):
+    for df in tqdm(ORIGINAL_CSVS, description='Copying Annotation CSVs...'):
         # Load in annotation files to DataFrames
         anno_df = load_anno_csv(df, no_height_width=True, has_classes=True)
         binary_df = anno_df.copy(deep=True)
@@ -95,9 +96,9 @@ def main():
 
 
 if __name__ == "__main__":
-    print('\nStarting execution...')
+    print(f"\n{'Starting execution: ' + Path(__file__).name:-^80}\n")
     start_time = time.perf_counter()
     main()
     elapsed = time.perf_counter() - start_time
-    print('Done!')
+    print(f"\n{'Done!':-^80}")
     print(f'Execution finished in {elapsed:.3f} seconds ({time.strftime("%-H hr, %-M min, %-S sec", time.gmtime(elapsed))}).\n')
